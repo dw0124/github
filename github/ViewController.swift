@@ -12,20 +12,29 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
     @IBOutlet weak var customTableView: UITableView!
     @IBOutlet weak var searchBar : UISearchBar!
     let cellIdetifier: String = "repositoryCell"
-    var resultItems: [Items] = []
-    
+    var resultItems: [Items?] = []
+    var fetchingMore: Bool = false
+    var per_page:Int = 30
+    var page:Int = 1
     // MARK: - tableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return resultItems.count
+        if resultItems.isEmpty {
+            return 1
+        }
+        else {
+            return resultItems.count
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = customTableView.dequeueReusableCell(withIdentifier: cellIdetifier) as? TableViewCell else { return UITableViewCell() }
         
-        cell.fullnameLabel.text = resultItems[indexPath.row].full_name
-        cell.descriptionLabel.text = resultItems[indexPath.row].description ?? ""
-        
+        if resultItems.isEmpty { cell.fullnameLabel.text = "No Result!"}
+        else{
+            cell.fullnameLabel.text = resultItems[indexPath.row]?.full_name
+            cell.descriptionLabel.text = resultItems[indexPath.row]?.description ?? ""
+        }
         return cell
     }
     
@@ -35,6 +44,7 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
         // Do any additional setup after loading the view.
         customTableView.delegate = self
         customTableView.dataSource = self
+        searchBar.delegate = self
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -44,9 +54,6 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
     
     // MARK: - API Load Data
     func apiLoad(qValue:String = "tetris") {
-        
-        let per_page:String = "30"
-        let page:String = "1"
 
         var components = URLComponents(string: "https://api.github.com/search/repositories")
         let q = URLQueryItem(name: "q", value: qValue)
@@ -78,7 +85,6 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
                 let apiResponse = try JSONDecoder().decode(Repositories.self, from: data)
                 self.resultItems = apiResponse.items
                 print("success!!!!!")
-                
                 // 테이블뷰에 데이터 뿌려줌
                 DispatchQueue.main.async {
                     self.customTableView.reloadData()
@@ -90,6 +96,40 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
         return dataTask.resume()
     }
 
+    // MARK - Scroll
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        
+        if offsetY > contentHeight - scrollView.frame.height {
+            if !fetchingMore {
+                beginBatchFetch()
+            }
+        }
+    }
+    
+    func beginBatchFetch() {
+            fetchingMore = true
+            // 0.7초 후에 실행 시킴
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: {
+                self.page += 1
+                
+                self.apiLoad()
+                
+                print(self.page)
+                self.fetchingMore = false
+                self.customTableView.reloadData()
+            })
+     }
+    
 }
 
+// MARK: - SearBarDelegate
+extension ViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String = "") {
+        print("------------------\(searchText)------------------")
+        if searchText.isEmpty { print("nil") }
+        else { apiLoad(qValue: searchText) }
+    }
+}
 
