@@ -4,7 +4,7 @@
 //
 //  Created by 김두원 on 2022/05/08.
 //
-
+// Change something
 import UIKit
 
 class ViewController: UIViewController , UITableViewDataSource, UITableViewDelegate{
@@ -39,7 +39,6 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
         apiLoad()
     }
     
