@@ -16,6 +16,8 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
     var fetchingMore: Bool = false
     var per_page:Int = 30
     var page:Int = 1
+    var someData: Bool = false
+    
     // MARK: - tableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
@@ -45,6 +47,7 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
         customTableView.delegate = self
         customTableView.dataSource = self
         searchBar.delegate = self
+        
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -83,7 +86,13 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
             // Json 데이터 디코드
             do{
                 let apiResponse = try JSONDecoder().decode(Repositories.self, from: data)
-                self.resultItems = apiResponse.items
+                // someData를 통해 api를 불러온적이 있으면 append 함
+                if !self.someData {
+                    self.resultItems = apiResponse.items
+                    self.someData = true
+                } else {
+                    self.resultItems.append(contentsOf: apiResponse.items)
+                }
                 print("success!!!!!")
                 // 테이블뷰에 데이터 뿌려줌
                 DispatchQueue.main.async {
@@ -103,20 +112,21 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
         
         if offsetY > contentHeight - scrollView.frame.height {
             if !fetchingMore {
-                beginBatchFetch()
+                let searchValue = searchBar.text ?? "tetris"
+                beginBatchFetch(searchValue: searchValue)
             }
         }
     }
     
-    func beginBatchFetch() {
+    func beginBatchFetch(searchValue: String) {
             fetchingMore = true
             // 0.7초 후에 실행 시킴
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: {
                 self.page += 1
                 
-                self.apiLoad()
+                self.apiLoad(qValue:searchValue)
                 
-                print(self.page)
+                print("----------------------\(self.page)------------------------")
                 self.fetchingMore = false
                 self.customTableView.reloadData()
             })
@@ -129,7 +139,10 @@ extension ViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String = "") {
         print("------------------\(searchText)------------------")
         if searchText.isEmpty { print("nil") }
-        else { apiLoad(qValue: searchText) }
+        else {
+            apiLoad(qValue: searchText)
+            self.someData = false
+        }
     }
 }
 
