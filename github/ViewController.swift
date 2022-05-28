@@ -7,15 +7,6 @@
 // Change something
 import UIKit
 
-/*
- 문제점 정리
- 1. 텍스트가 입력될때마다 API를 요청하고 있다.
- => 사용자가 입력 완료 버튼을 누를때만 API를 요청
- 
- 2. LoadMore가 안되는 문제점 해결
- => 다음페이지를 받는 파라미터가 없다. 서치바의 텍스트가 빈값("")이어도 nil이 아니다!!!
- */
-
 class ViewController: UIViewController , UITableViewDataSource, UITableViewDelegate{
     
     @IBOutlet weak var customTableView: UITableView!
@@ -29,7 +20,7 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
     
     // MARK: - tableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        resultItems.isEmpty ? 1 : resultItems.count
+        return resultItems.isEmpty ? 1 : resultItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -60,11 +51,11 @@ class ViewController: UIViewController , UITableViewDataSource, UITableViewDeleg
 
         var components = URLComponents(string: "https://api.github.com/search/repositories")
         let q = URLQueryItem(name: "q", value: qValue)
-        //let order = URLQueryItem(name: "order", value: "desc")
+        let order = URLQueryItem(name: "order", value: "desc")
         let perPage = URLQueryItem(name: "per_page", value: "\(per_page)")
         let pageCount = URLQueryItem(name: "page", value: "\(nextPage)")
 
-        components?.queryItems = [q/*, order*/, perPage, pageCount]
+        components?.queryItems = [q, order, perPage, pageCount]
         
         guard let url = components?.url else { print("URL failed"); return }
         
